@@ -5,8 +5,8 @@
 
 ## Usage
 ```
-sudo ./install_java.sh <jdk.XXX.tar.gz>
-./install_java.sh <jdk.XXX.tar.gz>
+sudo ./install_jdk.sh <jdk.XXX.tar.gz>
+./install_jdk.sh <jdk.XXX.tar.gz>
 
 如果以 root 权限运行 包括sudo, 则会将 java 安装在 /usr/lib/Java/jdkXXX 目录下
 并将 JAVA_HOME, JRE_HOME, CLASSPATH, PATH 环境变量设置在 /etc/profile 中

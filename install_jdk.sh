@@ -111,4 +111,4 @@ echo "CLASSPATH=${CLASSPATH}";
 echo "PATH=${PATH}";
 echo;
 
-echo -e "\033[31m Reboot system for complete install...\033[0m";
+echo -e "\033[31m Reboot system to complete install...\033[0m";

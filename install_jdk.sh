@@ -75,7 +75,7 @@ main()
 		echo '################## Add For Java ##################' >> $InitProfile;
 		echo \"export JAVA_HOME=\${JavaHome}\" >> $InitProfile;
 		echo \"export JRE_HOME=\\\${JAVA_HOME}/jre\" >> $InitProfile;
-		echo \"export CLASSPATH=\\\${JAVA_HOME}/lib:\\\${JRE_HOME}/lib\" >> $InitProfile;
+		echo \"export CLASSPATH=\\\${JAVA_HOME}/lib:\\\${JRE_HOME}/lib:.\" >> $InitProfile;
 		echo \"export PATH=\${PATH}:\\\${JAVA_HOME}/bin\" >> $InitProfile;
 		echo '##################     End      ##################' >> $InitProfile;
 

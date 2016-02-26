@@ -22,11 +22,41 @@ $ ./install_jdk.sh <jdk.XXX.tar.gz>
 ## wiki_to_book.sh (将 git wiki 转换成 gitbook 的工具)
 ### Details
 ```bash
-为了将一个 git 项目的 wiki 进行翻译并 push 到 gitbook 上方便阅读和分享，
-这个工具就是为了将 wiki 的目录(Home.md) 转换为 gitbook 的目录(SUMMARY.md)，
-同时也会根据 wiki 每个目录项目的等级，将对应的页面放入到同等级的目录下，方便管理
+#
+# 此脚本的目的是为了将 github Wiki 页面转换为 gitbook, 方便阅读和分享
+# 即将 Home.md 转换为 SUMMARY.md, 并将相应的文件转入到相应等级的文件夹下,
+# 注意：
+#   只有使用了 github 默认的 wiki 目录方式 [[New Page]] 才会被转换
+#
+# 例如：wiki 的目录结构如下:
+#  /Home.md
+#  /Page1.md
+#  /Page2.md
+#  /Page3.md
+#
+#  Home.md 里的目录结构如下:
+#     * Introduction
+#        * [[Page1]]
+#     * [[Getting Start | Page2 ]]
+#        * [[Page3]]
+#
+# 最终输出的目录结构为:
+#  /SUMMARY.md
+#  /Introduction
+#       /Page1.md
+#  /Getting-Start
+#       /Page2.md
+#       /Page3.md
+#
+# SUMMARY.md 里的目录结构如下:(会把特殊字符过滤掉)
+#   * Introduction
+#       * [Page1](Introduction/Page1.md)
+#   * [Getting Start](Getting-Start/Page2.md)
+#       * [Page3](Getting-Start/Page3.md)
+#
 
+$ ./wiki_to_book.sh
+$ ./wiki_to_book.sh <Path of Home.md>
 $ ./wiki_to_book.sh <Path of Home.md> <Path of SUMMARY.md>
 
-注意在 wiki 的主目录运行
 ```

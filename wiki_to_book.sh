@@ -91,11 +91,6 @@ function get_file()
     done;
 }
 
-# 处理标题等级
-function process_ref_title()
-{
-    local
-}
 
 # 处理标题
 declare -a last_title_info=();
@@ -118,32 +113,85 @@ function process_title()
     # done;
 
     local level=0 arr_size="${#title_indent_info[@]}";
-    local last_same="${title_indent_info[$num_indent]}";
+    local file="" last_same="${title_indent_info[$num_indent]}";
 
-    local last_level=0 last_path="" title_path="";
-    if [[ -n "$last_same" ]]; then
-        last_level="${last_same%%:*}";
-        last_path="${last_same#*:}";
+    local last_level=0 last_indent=0 last_dir="" last_title="" last_path="";
+    local title_path="" title_dir="";
+    if [[ -n "${last_title_info[@]}" ]]; then
+        last_level="${last_title_info[0]}";
+        last_indent="${last_title_info[1]}";
+        last_dir="${last_title_info[2]}";
+        last_title="${last_title_info[3]}";
 
-        title_path="${last_path%\/*}/${title}";
-        ((level=last_level));
-    else if [[ -n "${last_title_info[@]}" ]]; then
-        last_level="${last_title_info[1]}";
-        last_path="${last_title_info[2]}";
+        last_path="${last_title}";
+        [[ -n "$last_dir" ]] && last_path="${last_dir}/${last_title}";
 
-        title_path="${last_path%\/*}/${title}";
-        ((level=last_level+1));
+        local last_title_path="${out_dir}/${last_path}";
+
+        if [[ -n "$last_same" ]]; then
+            if ((num_indent < last_indent)); then
+                last_level="${last_same%%:*}";
+                last_dir="${last_same#*:}";
+
+                last_title="${last_dir##*;}";
+                last_dir="${last_dir%;*}";
+
+                title_dir="${last_dir}";
+
+                ((level=last_level));
+
+            elif ((num_indent == last_indent)); then
+                title_dir="${last_dir}";
+                ((level=last_level));
+
+            else
+                if [[ ! -d "$last_title_path" ]]; then
+                    if mkdir -p "$last_title_path"; then
+                        # for file in "${last_title_out_files[@]}"; do
+                        #     file="${out_dir}/${file}";
+                        #     [[ -e "$file" ]] && mv "$file" "$last_title_path";
+                        # done;
+                        last_title_out_files=();
+                    else
+                        echo "create directory '$last_title_path' failed" >&2;
+                        exit -1;
+                    fi;
+                fi;
+
+                title_dir="$last_path";
+                ((level=last_level+1));
+            fi;
+
+        else
+            if ((num_indent - last_indent < 2)); then
+                num_indent="$last_indent";
+                title_dir="$last_dir";
+                ((level=last_level));
+            else
+                # 如果上一级标题没有被创建为文件夹，则需要创建文件夹, 并把对应的文件移进去
+                if [[ ! -d "$last_title_path" ]]; then
+                    if mkdir -p "$last_title_path"; then
+                        # for file in "${last_title_out_files[@]}"; do
+                        #     file="${out_dir}/${file}";
+                        #     [[ -e "$file" ]] && mv "$file" "$last_title_path";
+                        # done;
+                        last_title_out_files=();
+                    else
+                        echo "create directory '$last_title_path' failed" >&2;
+                        exit -1;
+                    fi;
+                fi;
+
+                title_dir="$last_path";
+                ((level=last_level+1));
+            fi;
+        fi;
     fi;
 
-    title_indent_info[$num_indent]="${level}:${title_path}";
-    cur_title_info=("${level}" "${num_indent}" "${title_path}");
+    # echo "$title_dir";
 
-    last_path="${out_dir}/$last_path";
-    title_path="${out_dir}/$title_path";
-
-    if [[ ! -d "$last_path" ]]; then
-        :; # TODO
-    fi;
+    title_indent_info[$num_indent]="${level}:${title_dir};${title}";
+    cur_title_info=("${level}" "${num_indent}" "${title_dir}" "${title}");
 }
 
 # 处理 [[]] 里面引用的内容
@@ -157,7 +205,7 @@ function process_ref_name()
     alias_name_return="";
     file_path_return="";
 
-    local ref_name="$1";
+    local ref_name="$1" is_title="$2";
 
     local page_name="${ref_name#*|}";
     local alias_name="${ref_name%|$page_name}";
@@ -169,8 +217,16 @@ function process_ref_name()
         return;
     fi;
 
-    local src_file="${home_dir}/${fname}" out_file="${out_dir}/${fname}";
-    cp "${src_file}" "${out_file}" || return;
+    local out_file="${out_dir}/${fname}";
+
+    # 把文件移动到文件夹
+    if ((is_title == 1)); then
+        local title_dir="${cur_title_info[2]}";
+        local title_path="${out_dir}/${title_dir}";
+        if [[ -n "$title_dir" ]] && mv "$out_file" "$title_path"; then
+            fname="${title_dir}/${fname}";
+        fi;
+    fi;
 
     file_name_return="$fname";
     alias_name_return="$alias_name";
@@ -224,7 +280,7 @@ function process_line()
         elif ((ref_beg == 1)); then
             if [[ "${wchar}" = "]]" ]]; then
                 ((ref_beg = 0));
-                process_ref_name "$ref_name";
+                process_ref_name "$ref_name" "$is_title";
                 result="${result}${result_return}";
 
                 if ((is_title == 1)); then
@@ -248,12 +304,11 @@ function process_line()
     done;
 
     if ((is_title == 1)); then
-        process_ref_title ;
-
         last_title_info=("${cur_title_info[@]}");
         last_title_out_files=("${cur_title_out_files[@]}");
     fi;
 
+    echo "$result" >&2;
     echo "$result";
 }
 
@@ -287,12 +342,29 @@ function main()
         home_dir=".";
     fi;
 
+    if ! cp -R "${home_dir}"/* "${out_dir}"; then
+        echo "copy files failed";
+        exit -1;
+    fi;
+
+    local out_summary="${out_dir}/SUMMARY.md";
+    local out_readme="${out_dir}/README.md";
+    if [[ ! -e "${out_readme}" ]]; then
+        touch "$out_readme";
+    fi;
+
+    echo "Working....";
     IFS=''; # 为了读取空格
     local num_line=0;
-    while read line; do
+    while true; do
         ((num_line += 1));
+        if ! read line; then
+            process_line "$line" "$num_line";
+            break;
+        fi;
         process_line "$line" "$num_line";
-    done< <(sed -e "s/\t/    /g" "$home_md");
+    done< <(sed -e "s/\t/    /g" "$home_md") >"$out_summary";
+    echo "---------Finished Successfuly-----------";
 }
 
-main "$@"
+main "$@";

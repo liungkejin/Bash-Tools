@@ -75,7 +75,15 @@ declare -a title_indent_info=();
 # 根据名字找到对应的文件
 function get_file()
 {
-    local name="$1";
+    local name="$1" len="${#1}";
+    local i=0 j=0 beg=-1 end=-1 ;
+    for ((i=0, j=len-1; i<len; ++i,--j)); do
+        ((beg == -1)) && [[ "${name:$i:1}" != ' ' ]] && ((beg=i));
+        ((end == -1)) && [[ "${name:$j:1}" != ' ' ]] && ((end=j));
+        ((beg != -1)) && ((end != -1)) && break;
+    done;
+    name="${name:$beg:$((end-beg+1))}";
+
     local case_names=(
         "$name"
         "$(tr ' /' '-' <<< "$name")"

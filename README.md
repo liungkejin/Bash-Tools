@@ -45,8 +45,8 @@ $ ./install_jdk.sh <jdk.XXX.tar.gz>
 #  /Introduction
 #       /Page1.md
 #  /Getting-Start
-#       /Page2.md
 #       /Page3.md
+#  /Page2.md
 #
 # SUMMARY.md 里的目录结构如下:(会把特殊字符过滤掉)
 #   * Introduction

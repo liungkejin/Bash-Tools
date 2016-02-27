@@ -75,20 +75,24 @@ declare -a title_indent_info=();
 # 根据名字找到对应的文件
 function get_file()
 {
-    local name="$1" tname="$(tr ' /' '-' <<< "$1")";
-    local suf="" path="" tpath="";
-
-    local file_name="";
+    local name="$1";
+    local case_names=(
+        "$name"
+        "$(tr ' /' '-' <<< "$name")"
+        "${name/-/ }");
+    local cs="" suf="" path="";
+    local flag=0 file_name="";
     for suf in "${FILE_SUFFIX[@]}"; do
-        path="${home_dir}/${name}.${suf}";
-        tpath="${home_dir}/${tname}.${suf}";
-        if [[ -e "$path" ]]; then
-            file_name="$name.${suf}";
-            break;
-        elif [[ -e "$tpath" ]]; then
-            file_name="$tname.${suf}";
-            break;
-        fi;
+        ((flag=0));
+        for cs in "${case_names[@]}"; do
+            path="${out_dir}/${cs}.${suf}";
+            if [[ -e "$path" ]]; then
+                file_name="${cs}.${suf}";
+                ((flag=1));
+                break;
+            fi;
+        done;
+        ((flag==1)) && break;
     done;
 
     if [[ -n "$file_name" ]]; then
@@ -222,7 +226,9 @@ function process_ref_name()
     local fname="$(get_file "$page_name")";
 
     if [[ -z "$fname" ]]; then
-        echo -n " $ref_name ";
+        result_return="$alias_name";
+        alias_name_return="$alias_name";
+        file_name_return="";
         return;
     fi;
 
@@ -313,7 +319,6 @@ function process_line()
     done;
 
     if ((is_title == 1)); then
-
         local space="" level="${cur_title_info[0]}";
         for ((i=0; i<level; ++i)); do
             space="    ${space}";

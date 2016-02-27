@@ -78,17 +78,26 @@ function get_file()
     local name="$1" tname="$(tr ' /' '-' <<< "$1")";
     local suf="" path="" tpath="";
 
+    local file_name="";
     for suf in "${FILE_SUFFIX[@]}"; do
         path="${home_dir}/${name}.${suf}";
         tpath="${home_dir}/${tname}.${suf}";
         if [[ -e "$path" ]]; then
-            echo -n "$name.${suf}";
-            return;
+            file_name="$name.${suf}";
+            break;
         elif [[ -e "$tpath" ]]; then
-            echo -n "$tname.${suf}";
-            return;
+            file_name="$tname.${suf}";
+            break;
         fi;
     done;
+
+    if [[ -n "$file_name" ]]; then
+        local tfile_name="$(tr '()' '-' <<< "$file_name")";
+        if [[ "$file_name" != "$tfile_name" ]]; then
+            mv "${out_dir}/${file_name}" "${out_dir}/${tfile_name}" && file_name="$tfile_name";
+        fi;
+        echo -n "$file_name";
+    fi;
 }
 
 
@@ -304,6 +313,12 @@ function process_line()
     done;
 
     if ((is_title == 1)); then
+
+        local space="" level="${cur_title_info[0]}";
+        for ((i=0; i<level; ++i)); do
+            space="    ${space}";
+        done;
+        result="${space}*${result#*\*}";
         last_title_info=("${cur_title_info[@]}");
         last_title_out_files=("${cur_title_out_files[@]}");
     fi;

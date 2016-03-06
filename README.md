@@ -1,6 +1,8 @@
 # BashTools
 一些有用的 Bash Shell 工具脚本
 
+*注意在使用时确认脚本的格式为 LF 还是 CRLF, 在很多shell环境下面(如 android shell), CRLF 脚本会无法执行*
+
 ## install_jdk.sh (JDK 安装工具)
 
 ### Details
